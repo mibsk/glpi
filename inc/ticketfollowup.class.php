@@ -141,8 +141,9 @@ class TicketFollowup  extends CommonDBTM {
 
       $ticket = new Ticket();
       if (!$ticket->can($this->getField('tickets_id'), READ)
-        // No validation for closed tickets
-          || !$ticket->canReopen()) {
+          // No validation for closed tickets
+          || in_array($ticket->fields['status'], $ticket->getClosedStatusArray())
+             && !$ticket->isAllowedStatus($ticket->fields['status'], Ticket::INCOMING)) {
          return false;
       }
       return $ticket->canAddFollowups();
@@ -994,7 +995,7 @@ class TicketFollowup  extends CommonDBTM {
                         Html::jsShow("viewfollowup" . $ticket->fields['id'].$data["id"]."$rand")."\" ";
             }
             echo ">";
-            $content = nl2br($data['content']);
+            $content = Toolbox::getHtmlToDisplay($this->fields['content']);
             if (empty($content)) $content = NOT_AVAILABLE;
             echo $content.'</div>'; // boxnotetext
 

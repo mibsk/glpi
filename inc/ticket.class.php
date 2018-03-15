@@ -1361,6 +1361,18 @@ class Ticket extends CommonITILObject {
          }
       }
 
+      if (!empty($this->input['items_id'])) {
+         $item_ticket = new Item_Ticket();
+         foreach ($this->input['items_id'] as $itemtype => $items) {
+            foreach ($items as $items_id) {
+               $item_ticket->add(['items_id'      => $items_id,
+                                  'itemtype'      => $itemtype,
+                                  'tickets_id'    => $this->fields['id'],
+                                  '_disablenotif' => true]);
+            }
+         }
+      }
+
       if (count($this->updates)) {
          // Update Ticket Tco
          if (in_array("actiontime", $this->updates)
@@ -3084,6 +3096,12 @@ class Ticket extends CommonITILObject {
          if (isset($_POST)) {
             $options = $_POST;
          }
+      }
+
+      if (isset($options['name'])) {
+         $order           = ["\\'", '\\"', "\\\\"];
+         $replace         = ["'", '"', "\\"];
+         $options['name'] = str_replace($order, $replace, $options['name']);
       }
 
       // Restore saved value or override with page parameter
@@ -6262,8 +6280,8 @@ class Ticket extends CommonITILObject {
 
       // If is html content
       if ($content != strip_tags($content)) {
-         $content = Html::clean($this->convertImageToTag($content), false, 1);
-         $content = Html::entity_decode_deep(Html::clean($this->convertImageToTag($content)));
+         $content = $this->convertImageToTag($content);
+         $content = Toolbox::getHtmlToDisplay($content);
       }
 
       return $content;
@@ -6580,7 +6598,7 @@ class Ticket extends CommonITILObject {
          if (isset($item_i['content'])) {
             $content = $item_i['content'];
             $content = autolink($content, 40);
-            //$content = nl2br($content);
+            $content = Toolbox::getHtmlToDisplay($content);
 
             $long_text = "";
             if ((substr_count($content, "<br") > 30) || (strlen($content) > 2000)) {
